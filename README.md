@@ -1,2 +1,2 @@
-# tizen-iot
-Contrib packages for IoT under Tizen
+# tizen-iot-demo
+demo package for IoT under Tizen
