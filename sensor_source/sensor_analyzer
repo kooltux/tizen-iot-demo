@@ -1,0 +1,137 @@
+#!/usr/bin/env node
+
+// vim: set syntax=javascript:
+
+var util=require('util');
+var child_process=require('child_process');
+var fs=require('fs');
+
+var LIMITS=[60,45,20,0];
+var LIMITS_LABELS=["CRASH","ALERT","WARNING","OK"];
+var EVENT_REPEAT_MS=1000;
+var DEBUG=false;
+
+// define output stream
+if (process.argv.length != 3) {
+	console.log("Error: Usage is: "+process.argv[1]+" <output file>");
+	process.exit(1);
+}
+var output_file=process.argv[2];
+var output_stream=null;
+
+function get_output_stream() {
+	if (!output_stream) {
+		console.log("Opening output stream: "+output_file);
+		output_stream=fs.createWriteStream(output_file,{
+			flags:'w',
+			encoding: null
+		}).on('finish',function() {
+			console.log("Error: Output stream: closed.");
+			output_stream=null;
+		}).on('error',function(err) {
+			console.log("Error: Output stream: "+err);
+			output_stream.end();
+			output_stream=null;
+		});
+	}
+
+	return output_stream;
+}
+
+function fork_sampler() {
+	console.log("Forking new sampler");
+	var child=child_process.spawn(
+		"/usr/bin/mpu9250_sample", DEBUG ? ["-d","200"] : [],
+		{
+			stdio: [
+				'ignore',
+				'pipe',
+				'pipe'
+			]
+		}
+	).on('exit',function(code) {
+		setTimeout(fork_sampler,1000);
+	});
+
+	console.log("Forked sampler as pid "+child.pid);
+
+	var buffer="";
+	child.stdout.on('data',function(data) {
+		// extract lines and process value
+		buffer+=data;
+
+		while (1) {
+			var eol=buffer.indexOf("\n");
+			if (eol<=0)
+				break;
+			jsonstr=buffer.substring(0,eol);
+			buffer=buffer.substring(eol+1)
+			//DEBUG && console.log("Sampler line: "+jsonstr);
+			try {
+				var sample=JSON.parse(jsonstr);
+				analyze(sample);
+			}
+			catch(e) {
+				console.log("Error: invalid JSON: "+e);
+			}
+		}
+	});
+	child.stderr.on('data',function(data) {
+		console.log("Error: Sampler error: "+data);
+	});
+}
+
+var last_state=0;
+
+var ts_ref=Date.now();
+function ts() {
+	return Date.now() - ts_ref;
+}
+
+var last_event=ts_ref;
+
+function analyze(sample) {
+	DEBUG && console.log("Sample: "+sample.p.x+","+sample.p.y);
+
+	var x=Math.abs(sample.p.x);
+	var y=Math.abs(sample.p.y);
+
+	var evt_sent;
+
+	LIMITS.some(function(limit,idx) {
+		if (x>limit || y>limit) {
+			if (last_state != idx) {
+				send_event({
+					state: LIMITS_LABELS[idx],
+					limit: limit,
+					x: x,
+					y: y,
+					ts: ts()/1000.0
+				});
+				last_state=idx;
+				evt_sent=true;
+			}
+			return true;
+		}
+	});
+
+	if (!evt_sent && ((ts() - last_event) > EVENT_REPEAT_MS)) {
+		send_event({
+			state: LIMITS_LABELS[last_state],
+			limit: LIMITS[last_state],
+			x: x,
+			y: y,
+			ts: ts()/1000.0
+		});
+		return ;
+	}
+}
+
+function send_event(obj) {
+	DEBUG && console.log("Event: "+JSON.stringify(obj));
+	get_output_stream().write(JSON.stringify(obj)+"\n");
+	last_event=ts();
+}
+
+fork_sampler();
+

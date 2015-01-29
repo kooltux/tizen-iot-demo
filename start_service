@@ -1,18 +1,23 @@
 #!/bin/bash
 
+HCIDEV=${1:-hci0}
+
 . /etc/iot/network.conf
 
 mymac=$(hciconfig $HCIDEV | egrep -io "(([0-9a-f]{2}:){5}[0-9a-f]{2})")
 
 case $mymac in
 	$SENSOR_BT)
-		exec $(dirname $0)/sensor_source/service.sh
+		cd $(dirname $0)/sensor_source
+		exec ./service.sh
 		;;
 	$ROUTER_BT)
-		exec $(dirname $0)/local_router/service.sh
+		cd $(dirname $0)/local_router
+		exec ./service.sh
 		;;
 	$SERVER_BT)
-		exec $(dirname $0)/remote_server/service.sh
+		cd $(dirname $0)/remote_server
+		exec ./service.sh
 		;;
 	*)
 		echo "Unknown bluetooth adapter"

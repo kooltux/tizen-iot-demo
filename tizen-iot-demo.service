@@ -1,0 +1,12 @@
+[Unit]
+Description=Tizen IoT Demo
+
+[Service]
+User=root
+WorkingDirectory=/run/%u
+ExecStart=/usr/share/tizen-iot-demo/start_service
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
