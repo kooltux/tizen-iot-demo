@@ -12,8 +12,8 @@ var EVENT_REPEAT_MS=1000;
 var DEBUG=true;
 
 // define output stream
-if (process.argv.length != 5) {
-	console.log("Error: Usage is: "+process.argv[1]+" <output device> <dest MAC addr> <output channel>");
+if (process.argv.length != 6) {
+	console.log("Error: Usage is: "+process.argv[1]+" <output device> <dest MAC addr> <output channel> <blinkexe>");
 	process.exit(1);
 }
 var output_file=process.argv[2];
@@ -23,6 +23,15 @@ var output_stream_timer=null;
 var dest_mac=process.argv[3];
 var dest_channel=process.argv[4];
 var rfcomm_child=null;
+
+var blink_exe=process.argv[5];
+
+function blinkled() {
+	child_process.spawn(blink_exe,["on"],{stdio:"ignore"});
+	setTimeout(function() {
+		child_process.spawn(blink_exe,["off"],{stdio:"ignore"});
+	},200);
+}
 
 function write_output_stream(buf) {
 	if (!output_stream) {
@@ -97,12 +106,14 @@ function write_output_stream(buf) {
 				clearInterval(output_stream_timer);
 				DEBUG && console.log("Writing first buffer");
 				output_stream.write(buf);
+				blinkled();
 			});
 		},1000);
 	}
 	else {
 		DEBUG && console.log("Writing buffer");
 		output_stream.write(buf);
+		blinkled();
 	}
 }
 

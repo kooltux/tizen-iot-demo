@@ -1,0 +1,16 @@
+#!/bin/bash
+
+n=219 # for pin=18
+echo $n | sudo tee /sys/class/gpio/export
+echo out | sudo tee /sys/class/gpio/gpio$n/direction
+
+case ${1:-off} in
+	on)
+		echo 1 | sudo tee /sys/class/gpio/gpio$n/value
+		echo "Led ON"
+		;;
+	*)
+		echo 0 | sudo tee /sys/class/gpio/gpio$n/value
+		echo "Led OFF"
+		;;
+esac
