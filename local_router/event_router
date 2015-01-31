@@ -6,7 +6,7 @@ var util=require('util');
 var child_process=require('child_process');
 var fs=require('fs');
 
-var DEBUG=true;
+var DEBUG=false;
 
 // define output stream
 if (process.argv.length != 6) {
@@ -168,10 +168,10 @@ function write_displayer(msg) {
 		});
 		
 		console.log("Forked displayer as pid "+displayer.pid);
-		setTimeout(function() { if (displayer) displayer.stdin.write(msg+'\n'); }, 300);
+		setTimeout(function() { if (displayer) displayer.stdin.write(msg+'<br>\n'); }, 300);
 	}
 	else {
-		displayer.stdin.write(msg+'\n');
+		displayer.stdin.write(msg+'<br>\n');
 	}
 }
 

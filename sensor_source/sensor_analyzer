@@ -9,7 +9,7 @@ var fs=require('fs');
 var LIMITS=[60,45,20,0];
 var LIMITS_LABELS=["CRASH","ALERT","WARNING","OK"];
 var EVENT_REPEAT_MS=1000;
-var DEBUG=true;
+var DEBUG=false;
 
 // define output stream
 if (process.argv.length != 6) {
