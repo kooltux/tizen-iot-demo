@@ -189,7 +189,7 @@ function display_event(evt) {
 }
 
 function forward_event(evt) {
-	DEBUG && console.log("Forwarding event: "+JSON.stringify(evt));
+	console.log("Forwarding event: "+JSON.stringify(evt));
 	write_output_stream(JSON.stringify(evt)+"\n");
 }
 

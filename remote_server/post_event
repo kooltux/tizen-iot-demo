@@ -5,6 +5,7 @@
 var util=require('util');
 var child_process=require('child_process');
 var fs=require('fs');
+var rest = require('restler');
 
 var DEBUG=true;
 
@@ -56,11 +57,18 @@ function read_input_stream() {
 	});
 }
 
+var last_state="";
 function forward_event(evt) {
 	var buf=JSON.stringify(evt);
 	DEBUG && console.log("Forwarding event: "+buf);
 
-	// TODO: POST EVENT
+	if (evt.state != last_state) {
+		rest.get(output_url,{data: evt}).on('complete',function(result) {
+			if (result instanceof Error) {
+				console.log("Error while sending event to cloud server: "+result);
+			}
+		});
+	}
 }
 
 function main() {

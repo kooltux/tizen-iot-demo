@@ -132,6 +132,13 @@ function fork_sampler() {
 		setTimeout(fork_sampler,1000);
 	});
 
+	/*
+	setTimeout(function() {
+		process.kill(child.pid,'SIGINT');
+		console.log("Killed mpu9250");
+	},30000);
+	*/
+
 	console.log("Forked sampler as pid "+child.pid);
 
 	var buffer="";
