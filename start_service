@@ -4,6 +4,8 @@ HCIDEV=${1:-hci0}
 
 . /etc/iot/network.conf
 
+rfkill unblock all
+
 mymac=$(hciconfig $HCIDEV | egrep -io "(([0-9a-f]{2}:){5}[0-9a-f]{2})")
 
 case $mymac in

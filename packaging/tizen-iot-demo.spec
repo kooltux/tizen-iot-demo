@@ -31,6 +31,7 @@ mkdir -p %{buildroot}%{_datadir}/%{name}
 for subdir in sensor_source local_router remote_server; do
 	cp -a $subdir %{buildroot}%{_datadir}/%{name}/$subdir
 done
+install -m 755 start_service %{buildroot}%{_datadir}/%{name}/
 
 # setup service
 mkdir -p %{buildroot}%{_unitdir}
