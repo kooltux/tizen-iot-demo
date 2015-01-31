@@ -9,15 +9,15 @@ rfkill unblock all
 mymac=$(hciconfig $HCIDEV | egrep -io "(([0-9a-f]{2}:){5}[0-9a-f]{2})")
 
 case $mymac in
-	$SENSOR_BT)
+	$IOT_SENSOR_BT)
 		cd $(dirname $0)/sensor_source
 		exec ./service.sh
 		;;
-	$ROUTER_BT)
+	$IOT_ROUTER_BT)
 		cd $(dirname $0)/local_router
 		exec ./service.sh
 		;;
-	$SERVER_BT)
+	$IOT_SERVER_BT)
 		cd $(dirname $0)/remote_server
 		exec ./service.sh
 		;;
