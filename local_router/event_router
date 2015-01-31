@@ -6,21 +6,19 @@ var util=require('util');
 var child_process=require('child_process');
 var fs=require('fs');
 
-var LIMITS=[60,45,20,0];
-var LIMITS_LABELS=["CRASH","ALERT","WARNING","OK"];
-var EVENT_REPEAT_MS=1000;
 var DEBUG=true;
 
 // define output stream
-if (process.argv.length != 4) {
-	console.log("Error: Usage is: "+process.argv[1]+" <output device> <dest MAC addr>");
+if (process.argv.length != 5) {
+	console.log("Error: Usage is: "+process.argv[1]+" <input file> <output file> <dest MAC>");
 	process.exit(1);
 }
-var output_file=process.argv[2];
+var input_file=process.argv[2];
+var output_file=process.argv[3];
+var dest_mac=process.argv[4];
 var output_stream=null;
 var output_stream_timer=null;
 
-var dest_mac=process.argv[3];
 var rfcomm_child=null;
 
 function write_output_stream(buf) {
@@ -105,25 +103,26 @@ function write_output_stream(buf) {
 	}
 }
 
-function fork_sampler() {
-	console.log("Forking new sampler");
-	var child=child_process.spawn(
-		"/usr/bin/mpu9250_sample", DEBUG ? ["-d","200"] : [],
-		{
-			stdio: [
-				'ignore',
-				'pipe',
-				'pipe'
-			]
-		}
-	).on('exit',function(code) {
-		setTimeout(fork_sampler,1000);
-	});
 
-	console.log("Forked sampler as pid "+child.pid);
-
+var input_stream=null;
+function read_input_stream() {
 	var buffer="";
-	child.stdout.on('data',function(data) {
+	
+	DEBUG && console.log("Opening input stream "+input_file);
+	input_stream=fs.createReadStream(input_file,{
+		flags:'r',
+		encoding: null,
+		autoClose: true
+	}).on('end',function() {
+		console.log("Error: Input stream: closed.");
+		input_stream=null;
+		setTimeout(read_input_stream,1000);
+	}).on('error',function(err) {
+		console.log("Error: Input stream: "+err);
+		input_stream.close();
+		input_stream=null;
+		setTimeout(read_input_stream,1000);
+	}).on('data',function(data) {
 		// extract lines and process value
 		buffer+=data;
 
@@ -133,83 +132,77 @@ function fork_sampler() {
 				break;
 			jsonstr=buffer.substring(0,eol);
 			buffer=buffer.substring(eol+1)
-			//DEBUG && console.log("Sampler line: "+jsonstr);
+			DEBUG && console.log("Event: "+jsonstr);
 			try {
-				var sample=JSON.parse(jsonstr);
-				analyze(sample);
+				var evt=JSON.parse(jsonstr);
+				display_event(evt);
+				forward_event(evt);
 			}
 			catch(e) {
 				console.log("Error: invalid JSON: "+e);
 			}
 		}
 	});
-	child.stderr.on('data',function(data) {
-		console.log("Error: Sampler error: "+data);
-	});
 }
 
-var last_state=0;
-
-var ts_ref=Date.now();
-function ts() {
-	return Date.now() - ts_ref;
-}
-
-var last_event=ts_ref;
-
-function analyze(sample) {
-	DEBUG && console.log("Sample: "+sample.p.x+","+sample.p.y);
-
-	var x=Math.abs(sample.p.x);
-	var y=Math.abs(sample.p.y);
-
-	var evt_sent;
-
-	LIMITS.some(function(limit,idx) {
-		if (x>limit || y>limit) {
-			if (last_state != idx) {
-				send_event({
-					state: LIMITS_LABELS[idx],
-					limit: limit,
-					x: x,
-					y: y,
-					ts: ts()/1000.0
-				});
-				last_state=idx;
-				evt_sent=true;
+var displayer;
+function write_displayer(msg) {
+	if (!displayer) {
+		console.log("Forking new displayer");
+		displayer=child_process.spawn(
+			"/usr/bin/fbcat", ["/dev/fb1"],
+			{
+				stdio: [
+					'pipe',
+					'ignore',
+					'pipe'
+				]
 			}
-			return true;
-		}
-	});
-
-	if (!evt_sent && ((ts() - last_event) > EVENT_REPEAT_MS)) {
-		send_event({
-			state: LIMITS_LABELS[last_state],
-			limit: LIMITS[last_state],
-			x: x,
-			y: y,
-			ts: ts()/1000.0
+		).on('exit',function(code) {
+			displayer=null;
 		});
-		return ;
+		displayer.stderr.on('data',function(data) {
+			console.log("Error: displayer error: "+data);
+		});
+		
+		console.log("Forked displayer as pid "+displayer.pid);
+		setTimeout(function() { if (displayer) displayer.stdin.write(msg+'\n'); }, 300);
+	}
+	else {
+		displayer.stdin.write(msg+'\n');
 	}
 }
 
-function send_event(obj) {
-	DEBUG && console.log("Event: "+JSON.stringify(obj));
-	write_output_stream(JSON.stringify(obj)+"\n");
-	last_event=ts();
+var MESSAGES={
+	"CRASH":	"<font color=#FF0000 font_size=170><b>CRASH !</b></font>",
+	"ALERT":	"<font color=#FF8000 font_size=170><b>ALERT !</b></font>",
+	"WARNING":	"<font color=#FFFF00 font_size=140><b>WARNING</b></font>",
+	"OK":		"<font color=#00FF00 font_size=300><b>OK</b></font>"
+};
+
+function display_event(evt) {
+	write_displayer(
+		"<font color=#FFFFFF font_size=10>"+Date()+"</font>"+
+		"<br><br>"+
+		(MESSAGES[evt.state] || MESSAGES.OK)
+	);
+}
+
+function forward_event(evt) {
+	DEBUG && console.log("Forwarding event: "+JSON.stringify(evt));
+	write_output_stream(JSON.stringify(evt)+"\n");
 }
 
 function main() {
-        try {
-		fork_sampler();
-        }
-        catch(e) {
-                console.log("ERROR: "+e);
+	try {
+		write_displayer("INIT DONE<BR>"+Date());
+		read_input_stream();
+	}
+	catch(e) {
+		console.log("ERROR: "+e);
 		console.log("--------------------- RESTART ------------------");
 		setTimout(main,10);
-        }
+	}
 }
 main();
-
 

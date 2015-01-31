@@ -1,0 +1,67 @@
+#!/usr/bin/env node
+
+// vim: set syntax=javascript:
+
+var util=require('util');
+var child_process=require('child_process');
+var fs=require('fs');
+
+var DEBUG=true;
+
+// define output stream
+if (process.argv.length != 4) {
+	console.log("Error: Usage is: "+process.argv[1]+" <input file> <output url>");
+	process.exit(1);
+}
+var input_file=process.argv[2];
+var output_url=process.argv[3];
+
+var input_stream=null;
+function read_input_stream() {
+	var buffer="";
+	
+	DEBUG && console.log("Opening input stream "+input_file);
+	input_stream=fs.createReadStream(input_file,{
+		flags:'r',
+		encoding: null,
+		autoClose: true
+	}).on('end',function() {
+		console.log("Error: Input stream: closed.");
+		input_stream=null;
+		setTimeout(read_input_stream,1000);
+	}).on('error',function(err) {
+		console.log("Error: Input stream: "+err);
+		input_stream.close();
+		input_stream=null;
+		setTimeout(read_input_stream,1000);
+	}).on('data',function(data) {
+		// extract lines and process value
+		buffer+=data;
+
+		while (1) {
+			var eol=buffer.indexOf("\n");
+			if (eol<=0)
+				break;
+			jsonstr=buffer.substring(0,eol);
+			buffer=buffer.substring(eol+1)
+			DEBUG && console.log("Event: "+jsonstr);
+			try {
+				var evt=JSON.parse(jsonstr);
+				forward_event(evt);
+			}
+			catch(e) {
+				console.log("Error: invalid JSON: "+e);
+			}
+		}
+	});
+}
+
+function forward_event(evt) {
+	DEBUG && console.log("Forwarding event: "+JSON.stringify(obj));
+
+	// TODO: POST EVENT
+	var buf=JSON.stringify(obj);
+}
+
+read_input_stream();
+
