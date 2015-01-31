@@ -57,11 +57,22 @@ function read_input_stream() {
 }
 
 function forward_event(evt) {
-	DEBUG && console.log("Forwarding event: "+JSON.stringify(obj));
+	var buf=JSON.stringify(evt);
+	DEBUG && console.log("Forwarding event: "+buf);
 
 	// TODO: POST EVENT
-	var buf=JSON.stringify(obj);
 }
 
-read_input_stream();
+function main() {
+        try {
+			read_input_stream();
+        }
+        catch(e) {
+			console.log("ERROR: "+e);
+			console.log("--------------------- RESTART ------------------");
+			setTimout(main,10);
+        }
+}
+main();
+
 

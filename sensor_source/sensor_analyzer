@@ -12,8 +12,8 @@ var EVENT_REPEAT_MS=1000;
 var DEBUG=true;
 
 // define output stream
-if (process.argv.length != 4) {
-	console.log("Error: Usage is: "+process.argv[1]+" <output device> <dest MAC addr>");
+if (process.argv.length != 5) {
+	console.log("Error: Usage is: "+process.argv[1]+" <output device> <dest MAC addr> <output channel>");
 	process.exit(1);
 }
 var output_file=process.argv[2];
@@ -21,6 +21,7 @@ var output_stream=null;
 var output_stream_timer=null;
 
 var dest_mac=process.argv[3];
+var dest_channel=process.argv[4];
 var rfcomm_child=null;
 
 function write_output_stream(buf) {
@@ -29,7 +30,7 @@ function write_output_stream(buf) {
 		if (!rfcomm_child) {
 			console.log("no rfcomm child");
 			rfcomm_child=child_process.spawn(
-				"/usr/bin/rfcomm", [ "-r","connect", output_file, dest_mac],
+				"/usr/bin/rfcomm", [ "-r","connect", output_file, dest_mac,dest_channel],
 				{
 					stdio: [
 						'ignore',
@@ -202,12 +203,12 @@ function send_event(obj) {
 
 function main() {
         try {
-		fork_sampler();
+			fork_sampler();
         }
         catch(e) {
-                console.log("ERROR: "+e);
-		console.log("--------------------- RESTART ------------------");
-		setTimout(main,10);
+			console.log("ERROR: "+e);
+			console.log("--------------------- RESTART ------------------");
+			setTimout(main,10);
         }
 }
 main();

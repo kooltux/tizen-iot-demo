@@ -9,13 +9,15 @@ var fs=require('fs');
 var DEBUG=true;
 
 // define output stream
-if (process.argv.length != 5) {
-	console.log("Error: Usage is: "+process.argv[1]+" <input file> <output file> <dest MAC>");
+if (process.argv.length != 6) {
+	console.log("Error: Usage is: "+process.argv[1]+" <input device> <output device> <dest MAC> <dest channel>");
 	process.exit(1);
 }
 var input_file=process.argv[2];
 var output_file=process.argv[3];
 var dest_mac=process.argv[4];
+var dest_channel=process.argv[5];
+
 var output_stream=null;
 var output_stream_timer=null;
 
@@ -27,7 +29,7 @@ function write_output_stream(buf) {
 		if (!rfcomm_child) {
 			console.log("no rfcomm child");
 			rfcomm_child=child_process.spawn(
-				"/usr/bin/rfcomm", [ "-r","connect", output_file, dest_mac],
+				"/usr/bin/rfcomm", [ "-r","connect", output_file, dest_mac,dest_channel],
 				{
 					stdio: [
 						'ignore',
@@ -182,8 +184,6 @@ var MESSAGES={
 
 function display_event(evt) {
 	write_displayer(
-		"<font color=#FFFFFF font_size=10>"+Date()+"</font>"+
-		"<br><br>"+
 		(MESSAGES[evt.state] || MESSAGES.OK)
 	);
 }
