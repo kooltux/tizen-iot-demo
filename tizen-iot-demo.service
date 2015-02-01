@@ -3,7 +3,7 @@ Description=Tizen IoT Demo
 
 [Service]
 User=root
-WorkingDirectory=/run/%u
+WorkingDirectory=/tmp
 ExecStart=/usr/share/tizen-iot-demo/start_service
 Restart=on-failure
 RestartSec=10
