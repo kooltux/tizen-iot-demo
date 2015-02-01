@@ -1,5 +1,6 @@
 [Unit]
 Description=Tizen IoT Demo
+After=bluetooth.service
 
 [Service]
 User=root

@@ -7,8 +7,8 @@ Source: %{name}-%{version}.tar.gz
 Source1001: %{name}.manifest
 License: MIT
 Group: Network & Connectivity/Other
-Requires: fbcat
 Requires: mpu9250
+Requires: nodejs
 
 %description
 Tizen IoT demo using 2 minnowboard max, 1 MPU9250 and 3 BT adapters
@@ -36,6 +36,29 @@ install -m 755 start_service %{buildroot}%{_datadir}/%{name}/
 # setup service
 mkdir -p %{buildroot}%{_unitdir}
 install -m 644 tizen-iot-demo.service %{buildroot}%{_unitdir}/
+
+%post
+
+systemctl enable tizen-iot-demo
+
+# disable weston
+systemctl disable display-manager
+systemctl disable display-manager-run
+
+systemctl daemon-reload
+
+# update zypper repo
+cat <<EOF >/etc/zypp/repos.d/tizen_local.repo
+[tizen-local]
+name=tizen-local
+enabled=1
+autorefresh=0
+baseurl=http://lenovo01/~sdx/snapshot/Tizen_Common_devel/latest/repos/x86_64-wayland/packages/?ssl_verify=no
+type=rpm-md
+gpgcheck=0
+EOF
+
+sed -i 's/enabled=1/enabled=0/g' /etc/zypp/repos.d/tizen-common-x86_64-wayland-snapshot.repo
 
 %files
 %manifest %{name}.manifest

@@ -118,6 +118,12 @@ function write_output_stream(buf) {
 	}
 }
 
+var sampler_pid=0;
+function restart_sampler() {
+	if (sampler_pid) {
+		process.kill(sampler_pid,'SIGINT');
+	}
+}
 function fork_sampler() {
 	console.log("Forking new sampler");
 	var child=child_process.spawn(
@@ -131,7 +137,9 @@ function fork_sampler() {
 		}
 	).on('exit',function(code) {
 		setTimeout(fork_sampler,1000);
+		sampler_pid=0;
 	});
+	sampler_pid=child.pid;
 
 	/*
 	setTimeout(function() {
@@ -214,10 +222,25 @@ function analyze(sample) {
 	}
 }
 
+var last_crash_start=0;
+
 function send_event(obj) {
 	DEBUG && console.log("Event: "+JSON.stringify(obj));
 	write_output_stream(JSON.stringify(obj)+"\n");
 	last_event=ts();
+
+	// handle crash event 
+	if (obj.state=="CRASH") {
+		if (!last_crash_start) {
+			last_crash_start=ts();
+		}
+		if ((ts()-last_crash_start)>5.0) {
+			restart_sampler();
+		}
+	}
+	else {
+		last_crash_start=0;
+	}
 }
 
 function main() {
