@@ -1,2 +1,2 @@
 #!/bin/bash
-[ -e /dev/fb1 ] && exec /usr/bin/cat $1 >/dev/fb1
+[ -c /dev/fb1 ] && exec /usr/bin/cat $1 >/dev/fb1
