@@ -114,7 +114,23 @@ window.HomeView = Backbone.View.extend({
 					table.push("<tr>");
 					table.push("<td>"+evt.x+"</td>");
 					table.push("<td>"+evt.y+"</td>");
-					table.push("<td>"+evt.state+"</td>");
+					switch(evt.state) {
+						case 'OK':
+							table.push("<td style='background:#0f0'>"+evt.state+"</td>");
+							break;
+						case 'WARNING':
+							table.push("<td style='background:#ff0'>"+evt.state+"</td>");
+							break;
+						case 'ALERT':
+							table.push("<td style='background:#f80'>"+evt.state+"</td>");
+							break;
+						case 'CRASH':
+							table.push("<td style='background:#f00'>"+evt.state+"</td>");
+							break;
+						default:
+							table.push("<td>"+evt.state+"</td>");
+							break;
+					}
 					table.push("</tr>");
 				});
 				table.push("</table>");
