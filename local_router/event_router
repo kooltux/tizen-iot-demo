@@ -29,7 +29,7 @@ function write_output_stream(buf) {
 		console.log("no output stream");
 		if (!rfcomm_child) {
 			console.log("no rfcomm child");
-			child_process.spawn("/usr/bin/rfkill",["unblock","all"],{stdio:'ignore'});
+			child_process.spawn("/usr/sbin/rfkill",["unblock","all"],{stdio:'ignore'});
 			rfcomm_child=child_process.spawn(
 				"/usr/bin/rfcomm", [ "-r","connect", output_file, dest_mac,dest_channel],
 				{
