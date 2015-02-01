@@ -234,8 +234,9 @@ function send_event(obj) {
 		if (!last_crash_start) {
 			last_crash_start=ts();
 		}
-		if ((ts()-last_crash_start)>5.0) {
+		if ((ts()-last_crash_start)>5000.0) {
 			restart_sampler();
+			last_crash_start=ts();
 		}
 	}
 	else {
