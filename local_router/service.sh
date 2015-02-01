@@ -4,7 +4,7 @@ rfkill unblock all
 
 . /etc/iot/network.conf
 
-cat /dev/zero >/dev/fb1
+[ -e /dev/fb1 ] && cat /dev/zero >/dev/fb1
 
 trap "echo 'Releasing rfcomm...';rfcomm release $IOT_COMM_ROUTER; killall rfcomm >/dev/null 2>&1" STOP INT QUIT EXIT
 
