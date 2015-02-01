@@ -110,7 +110,7 @@ window.HomeView = Backbone.View.extend({
 				
 				table.push("<table class='table table-striped table-bordered'>");
 				table.push("<tr><th>X</th><th>Y</th><th>State</th></tr>");
-				_.values(data).forEach(function(evt) {
+				data.events.forEach(function(evt) {
 					table.push("<tr>");
 					table.push("<td>"+evt.x+"</td>");
 					table.push("<td>"+evt.y+"</td>");
@@ -139,7 +139,7 @@ window.HomeView = Backbone.View.extend({
                });
             }
          });
-      },500);
+      },0);
    },
 	
 	setState: function(btnid,obj) {

@@ -1,0 +1,2 @@
+#!/bin/bash
+exec /usr/bin/cat $1 >/dev/fb1

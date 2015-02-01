@@ -62,7 +62,7 @@ function forward_event(evt) {
 	if (evt.state != last_state) {
 		DEBUG && console.log("Forwarding event: "+JSON.stringify(evt));
 		last_state=evt.state;
-		rest.get(output_url,{data: evt}).on('complete',function(result) {
+		rest.get(output_url+"?x="+evt.x+"&y="+evt.y+"&state="+evt.state).on('complete',function(result) {
 			if (result instanceof Error) {
 				console.log("Error while sending event to cloud server: "+result);
 			}
