@@ -59,10 +59,9 @@ function read_input_stream() {
 
 var last_state="";
 function forward_event(evt) {
-	var buf=JSON.stringify(evt);
-	DEBUG && console.log("Forwarding event: "+buf);
-
 	if (evt.state != last_state) {
+		DEBUG && console.log("Forwarding event: "+JSON.stringify(evt));
+		last_state=evt.state;
 		rest.get(output_url,{data: evt}).on('complete',function(result) {
 			if (result instanceof Error) {
 				console.log("Error while sending event to cloud server: "+result);
